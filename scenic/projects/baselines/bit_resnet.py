@@ -196,11 +196,12 @@ class BitResNet(nn.Module):
       x = ResNetStage(
           block_size,
           width * 2**i,
-          first_stride=(2, 2) if not max_stride_reached else (1, 1),
+          first_stride=(1, 1) if max_stride_reached else (2, 2),
           first_dilation=(2, 2) if max_stride_reached else (1, 1),
           bottleneck=bottleneck,
           gn_num_groups=self.gn_num_groups,
-          name=f'block{i + 1}')(x)
+          name=f'block{i + 1}',
+      )(x)
       if not max_stride_reached:
         stride *= 2
       representations[f'stage_{i + 1}'] = x
@@ -288,11 +289,10 @@ class BitResNetClassificationModel(ClassificationModel):
         # By default, for finetuning to another dataset, we drop this layer as
         # the label space is different.
         continue
-      else:
-        if pname not in params:
-          raise ValueError(f'Loaded parameter {pname} doesnt exist in params.')
-        params[pname] = pvalue
-        params_to_load.remove(pname)
+      if pname not in params:
+        raise ValueError(f'Loaded parameter {pname} doesnt exist in params.')
+      params[pname] = pvalue
+      params_to_load.remove(pname)
     if params_to_load:
       raise ValueError(
           f'Paramater groups that are not loaded: {params_to_load}')

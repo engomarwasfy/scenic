@@ -35,8 +35,7 @@ def sample_cxcywh_bbox(key, batch_shape):
   w = jnp.where(cx - w / 2. <= 0., frac * 2. * cx, w)
   h = jnp.where(cy - h / 2. <= 0., frac * 2. * cy, h)
 
-  bbox = jnp.concatenate([cx, cy, w, h], axis=-1)
-  return bbox
+  return jnp.concatenate([cx, cy, w, h], axis=-1)
 
 
 class BoxUtilsTest(parameterized.TestCase):
@@ -144,7 +143,7 @@ class RBoxUtilsTest(parameterized.TestCase):
     it_points = box_utils.intersect_rbox_edges(corners1, corners2)
     self.assertEqual(it_points.shape, (4, 4, 2))
     it_points = it_points[~jnp.any(jnp.isnan(it_points), -1)]
-    it_points = sorted([(x, y) for x, y in np.array(it_points)])
+    it_points = sorted(list(np.array(it_points)))
     expected_points = sorted([(0, 0), (0, 1), (1, 0), (1, 1)] * 2)
     self.assertSequenceEqual(it_points, expected_points)
 
@@ -157,7 +156,7 @@ class RBoxUtilsTest(parameterized.TestCase):
     it_points = box_utils.intersect_rbox_edges(corners1, corners2)
     it_points = jnp.round(
         it_points[~jnp.any(jnp.isnan(it_points), -1)], decimals=4)
-    it_points = sorted([(x, y) for x, y in np.array(it_points)])
+    it_points = sorted(list(np.array(it_points)))
     # Expect intersection at unrotated box vertices.
     expected_pts = sorted([(1.5, 1.5), (1.5, 0.5), (0.5, 0.5), (0.5, 1.5)] * 2)
     self.assertSequenceEqual(it_points, expected_pts)

@@ -101,8 +101,6 @@ def box_iou(boxes1: Array,
     # union = sum of areas - intersection
     union = area1[..., :, None] + area2[..., None, :] - intersection
 
-    iou = intersection / (union + 1e-6)
-
   else:
     # Compute top-left and bottom-right corners of the intersection between
     # corresponding boxes.
@@ -120,8 +118,7 @@ def box_iou(boxes1: Array,
     # union = sum of areas - intersection.
     union = area1 + area2 - intersection
 
-    # Somehow the PyTorch implementation does not use +1e-6 to avoid 1/0 cases.
-    iou = intersection / (union + 1e-6)
+  iou = intersection / (union + 1e-6)
 
   return iou, union
 
@@ -203,8 +200,7 @@ def cxcywha_to_corners(cxcywha: Array, np_backbone: PyModule = jnp) -> Array:
   rot = np_backbone.concatenate([cos, -sin, sin, cos], axis=-1).reshape(
       (*bs, 2, 2))
   offset = np_backbone.concatenate([cx, cy], -1).reshape((*bs, 1, 2))
-  corners = pts @ rot + offset
-  return corners
+  return pts @ rot + offset
 
 
 def corners_to_cxcywha(corners: jnp.ndarray,
@@ -244,9 +240,7 @@ def corners_to_cxcywha(corners: jnp.ndarray,
   cos = np_backbone.cos(a)
   w = wcornersx / (2 * cos)
   h = hcornersy / (2 * cos)
-  cxcywha = np_backbone.stack([cx, cy, w, h, a], axis=-1)
-
-  return cxcywha
+  return np_backbone.stack([cx, cy, w, h, a], axis=-1)
 
 
 def intersect_line_segments(lines1: jnp.array,

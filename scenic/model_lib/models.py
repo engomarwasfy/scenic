@@ -14,6 +14,7 @@
 
 """Registry for the available models we can train."""
 
+
 from typing import Type
 
 from scenic.model_lib.base_models import base_model
@@ -26,8 +27,6 @@ from scenic.projects.baselines import resnet
 from scenic.projects.baselines import simple_cnn
 from scenic.projects.baselines import unet
 from scenic.projects.baselines import vit
-
-ALL_MODELS = {}
 
 CLASSIFICATION_MODELS = {
     'fully_connected_classification':
@@ -58,8 +57,7 @@ SEGMENTATION_MODELS = {
 }
 
 
-ALL_MODELS.update(CLASSIFICATION_MODELS)
-ALL_MODELS.update(SEGMENTATION_MODELS)
+ALL_MODELS = CLASSIFICATION_MODELS | SEGMENTATION_MODELS
 
 
 def get_model_cls(model_name: str) -> Type[base_model.BaseModel]:
@@ -80,5 +78,5 @@ def get_model_cls(model_name: str) -> Type[base_model.BaseModel]:
     ValueError if model_name is unrecognized.
   """
   if model_name not in ALL_MODELS.keys():
-    raise ValueError('Unrecognized model: {}'.format(model_name))
+    raise ValueError(f'Unrecognized model: {model_name}')
   return ALL_MODELS[model_name]

@@ -88,8 +88,7 @@ class BERTGlobalEvaluator():
     if 'f1' in self.global_metrics:
       # Used for QQP and MRPC tasks.
       prediction = np.argmax(self.batches[1], axis=-1)
-      metrics.update(
-          f1_score_with_invalid(target=self.batches[0], prediction=prediction))
+      metrics |= f1_score_with_invalid(target=self.batches[0], prediction=prediction)
 
     if 'matthews_corrcoef' in self.global_metrics:
       # Used for COLA task.
@@ -218,8 +217,9 @@ class BERTFewShotEvaluator:
   def _get_dataset(self, config):
     """Lazy-loads given dataset."""
     if config.dataset_configs.task not in self.SUPPORTED_FEWSHOT_TASK_NAMES:
-      raise ValueError('dataset_configs.task_name must be one of [{}].'.format(
-          ', '.join(self.SUPPORTED_FEWSHOT_TASK_NAMES)))
+      raise ValueError(
+          f"dataset_configs.task_name must be one of [{', '.join(self.SUPPORTED_FEWSHOT_TASK_NAMES)}]."
+      )
     key = config.dataset_configs.task
     try:
       return self._datasets[key]
@@ -297,11 +297,10 @@ class BERTFewShotEvaluator:
 
   def run_all(self, train_state, datasets):
     """Compute summary over all `datasets` that comes from config."""
-    results = {}
-    for cfg in datasets:
-      results[cfg.dataset_configs.task] = self.compute_fewshot_metrics(
-          train_state, cfg)
-
+    results = {
+        cfg.dataset_configs.task: self.compute_fewshot_metrics(train_state, cfg)
+        for cfg in datasets
+    }
     # Now also figure out the regularization parameter that works best across
     # all datasets, per-shot. Similar to ATARI benchmark requiring one single
     # hyper-param across tasks, or BiT-HyperRule defining one clear thing.

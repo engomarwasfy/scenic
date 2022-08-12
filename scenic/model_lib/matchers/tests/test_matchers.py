@@ -86,11 +86,7 @@ def compute_cost(
 
   batch_size, max_num_boxes = tgt_labels.shape[:2]
   num_queries = out_prob.shape[1]
-  if target_is_onehot:
-    mask = tgt_labels[..., 0] == 0  # [B, M]
-  else:
-    mask = tgt_labels != 0  # [B, M]
-
+  mask = tgt_labels[..., 0] == 0 if target_is_onehot else tgt_labels != 0
   # [B, N, M]
   cost_class = -out_prob  # DETR uses -prob for matching.
   max_cost_class = 0.0
@@ -111,7 +107,7 @@ def compute_cost(
     cost = cost + bbox_loss_coef * cost_bbox
 
     # Cost_upper_bound is the approximate maximal possible total cost:
-    cost_upper_bound = cost_upper_bound + bbox_loss_coef * 4.0  # cost_bbox <= 4
+    cost_upper_bound += bbox_loss_coef * 4.0
 
     # [B, N, M]
     cost_giou = -box_utils.generalized_box_iou(
@@ -121,7 +117,7 @@ def compute_cost(
     cost = cost + giou_loss_coef * cost_giou
 
     # cost_giou < 0, but can be a bit higher in the beginning of training:
-    cost_upper_bound = cost_upper_bound + giou_loss_coef * 1.0
+    cost_upper_bound += giou_loss_coef * 1.0
 
   # Don't make costs too large w.r.t. the rest to avoid numerical instability.
   mask = mask[:, None]
@@ -158,8 +154,7 @@ def sample_cxcywh_bbox(key, batch_shape):
   w = jnp.where(cx - w / 2. <= 0., frac * 2. * cx, w)
   h = jnp.where(cy - h / 2. <= 0., frac * 2. * cy, h)
 
-  bbox = jnp.concatenate([cx, cy, w, h], axis=-1)
-  return bbox
+  return jnp.concatenate([cx, cy, w, h], axis=-1)
 
 
 class MatchingTest(parameterized.TestCase):

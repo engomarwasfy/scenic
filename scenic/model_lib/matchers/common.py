@@ -77,10 +77,7 @@ def cpu_matcher(matching_fn):
   # The callback function can only take a single argument.
   def maybe_slice_and_match(args):
     cost, ncol = args
-    if ncol is None:
-      return matching_fn(cost)
-    else:
-      return slicer(cost, ncol, matching_fn)
+    return matching_fn(cost) if ncol is None else slicer(cost, ncol, matching_fn)
 
   @jax.custom_vjp
   def matching_fn_hcb(cost, n_cols=None):

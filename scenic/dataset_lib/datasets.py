@@ -96,17 +96,16 @@ class DatasetRegistry(object):
       KeyError: If the dataset is not found.
     """
     if name not in cls._REGISTRY:
-      if name in _IMPORT_TABLE:
-        module = _IMPORT_TABLE[name]
-        importlib.import_module(module)
-        logging.info(
-            'On-demand import of dataset (%s) from module (%s).', name, module)
-        if name not in cls._REGISTRY:
-          raise KeyError(f'Imported module ({module}) did not register dataset'
-                         f'({name}). Please check that dataset names match.')
-      else:
+      if name not in _IMPORT_TABLE:
         raise KeyError(f'Unknown dataset ({name}). Did you import the dataset '
                        f'module explicitly?')
+      module = _IMPORT_TABLE[name]
+      importlib.import_module(module)
+      logging.info(
+          'On-demand import of dataset (%s) from module (%s).', name, module)
+    if name not in cls._REGISTRY:
+      raise KeyError(f'Imported module ({module}) did not register dataset'
+                     f'({name}). Please check that dataset names match.')
     return cls._REGISTRY[name]
 
   @classmethod

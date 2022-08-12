@@ -128,30 +128,30 @@ def load_model_vars(
   """Load model variables from a checkpoint, downloading if necessary."""
   checkpoint_path = checkpoint_path or CHECKPOINTS.get(model_name)
   if checkpoint_path is None:
-   checkpoint_path = os.path.join(download_dir, model_name + '.npy')
+    checkpoint_path = os.path.join(download_dir, f'{model_name}.npy')
 
-   if not gfile.exists(checkpoint_path):
-     # Download PyTorch checkpoint
-     url = CHECKPOINTS_TORCH.get(model_name)
-     logging.info('Downloading checkpoint from %s to %s', url, download_dir)
-     checkpoint_path_torch = download.download(
-         url, download_dir, expected_sha256=url.split('/')[-2])
+    if not gfile.exists(checkpoint_path):
+      # Download PyTorch checkpoint
+      url = CHECKPOINTS_TORCH.get(model_name)
+      logging.info('Downloading checkpoint from %s to %s', url, download_dir)
+      checkpoint_path_torch = download.download(
+          url, download_dir, expected_sha256=url.split('/')[-2])
 
-     # Load and convert checkpoint to numpy
-     logging.info('Converting checkpoint %s to numpy', checkpoint_path_torch)
-     try:
-       import torch
-     except ImportError as e:
-       logging.error('Could not import torch for CLIP checkpoint conversion')
-     params = torch.jit.load(
-         checkpoint_path_torch, map_location='cpu').state_dict()
-     params = jax.tree_map(lambda p: p.cpu().numpy(), params)
+      # Load and convert checkpoint to numpy
+      logging.info('Converting checkpoint %s to numpy', checkpoint_path_torch)
+      try:
+        import torch
+      except ImportError as e:
+        logging.error('Could not import torch for CLIP checkpoint conversion')
+      params = torch.jit.load(
+          checkpoint_path_torch, map_location='cpu').state_dict()
+      params = jax.tree_map(lambda p: p.cpu().numpy(), params)
 
-     # Save converted checkpoint
-     with gfile.GFile(checkpoint_path, 'wb') as f:
-       np.save(f, params)
-     del params
-     gfile.remove(checkpoint_path_torch)
+      # Save converted checkpoint
+      with gfile.GFile(checkpoint_path, 'wb') as f:
+        np.save(f, params)
+      del params
+      gfile.remove(checkpoint_path_torch)
 
   with gfile.GFile(checkpoint_path, 'rb') as f:
     np_params = np.load(f, allow_pickle=True).tolist()
@@ -213,17 +213,19 @@ def _convert_attn_layers(params: Mapping[str, np.ndarray],
       if base in processed_attn_layers:
         continue
       processed_attn_layers.append(base)
-      dim = params[base + 'out_proj.bias'].shape[-1]
+      dim = params[f'{base}out_proj.bias'].shape[-1]
       heads = dim // dim_head
-      new_params[base + 'out.weight'] = params[
-          base + 'out_proj.weight'].T.reshape(heads, dim_head, dim)
-      new_params[base + 'out.bias'] = params[base + 'out_proj.bias']
-      qkv_bias = params[base + 'in_proj_bias'].reshape(3, heads, dim_head)
-      qkv_kernel = np.transpose(params[base + 'in_proj_weight'].reshape(
-          3, heads, dim_head, dim), (0, 3, 1, 2))
+      new_params[f'{base}out.weight'] = params[
+          f'{base}out_proj.weight'].T.reshape(heads, dim_head, dim)
+      new_params[f'{base}out.bias'] = params[f'{base}out_proj.bias']
+      qkv_bias = params[f'{base}in_proj_bias'].reshape(3, heads, dim_head)
+      qkv_kernel = np.transpose(
+          params[f'{base}in_proj_weight'].reshape(3, heads, dim_head, dim),
+          (0, 3, 1, 2),
+      )
       for i, kk in enumerate(('query', 'key', 'value')):
-        new_params[base + f'{kk}.bias'] = qkv_bias[i]
-        new_params[base + f'{kk}.weight'] = qkv_kernel[i]
+        new_params[f'{base}{kk}.bias'] = qkv_bias[i]
+        new_params[f'{base}{kk}.weight'] = qkv_kernel[i]
     else:
       new_params[k] = v
   return new_params
@@ -259,7 +261,7 @@ def _convert_vars(torch_vars: Mapping[str, np.ndarray],
         jax_key.startswith('text_projection') or
         jax_key.startswith('ln_final') or
         jax_key.startswith('positional_embedding')):
-      jax_key = 'text.' + jax_key
+      jax_key = f'text.{jax_key}'
 
     jax_key = jax_key.replace(
         'token_embedding.kernel', 'text.token_embedding.embedding')
@@ -282,7 +284,7 @@ def _convert_vars(torch_vars: Mapping[str, np.ndarray],
     elif jax_key.endswith('running_var'):
       jax_key = 'batch_stats.' + jax_key.replace('.running_var', '.var')
     else:
-      jax_key = 'params.' + jax_key
+      jax_key = f'params.{jax_key}'
 
     jax_key = jax_key.replace('.', '/')
     jax_key = jax_key.replace('resblocks/', 'resblocks.')
@@ -290,9 +292,7 @@ def _convert_vars(torch_vars: Mapping[str, np.ndarray],
 
     flax_vars[tuple(jax_key.split('/'))] = jnp.asarray(v)
 
-  # Transform the flattened param dict to the original nested structure.
-  new_vars = flax.core.freeze(flax.traverse_util.unflatten_dict(flax_vars))
-  return new_vars
+  return flax.core.freeze(flax.traverse_util.unflatten_dict(flax_vars))
 
 
 def normalize_image(img: jnp.ndarray) -> jnp.ndarray:

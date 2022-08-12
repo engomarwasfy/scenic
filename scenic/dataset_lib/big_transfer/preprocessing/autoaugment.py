@@ -42,10 +42,7 @@ class HParams:
 
 def policy_v0():
   """Autoaugment policy that was used in AutoAugment Paper."""
-  # Each tuple is an augmentation operation of the form
-  # (operation, probability, magnitude). Each element in policy is a
-  # sub-policy that will be applied sequentially on the image.
-  policy = [
+  return [
       [('Equalize', 0.8, 1), ('ShearY', 0.8, 4)],
       [('Color', 0.4, 9), ('Equalize', 0.6, 3)],
       [('Color', 0.4, 1), ('Rotate', 0.6, 8)],
@@ -72,18 +69,13 @@ def policy_v0():
       [('Solarize', 0.6, 8), ('Equalize', 0.6, 1)],
       [('Color', 0.8, 6), ('Rotate', 0.4, 5)],
   ]
-  return policy
 
 
 def policy_vtest():
   """Autoaugment test policy for debugging."""
-  # Each tuple is an augmentation operation of the form
-  # (operation, probability, magnitude). Each element in policy is a
-  # sub-policy that will be applied sequentially on the image.
-  policy = [
+  return [
       [('TranslateX', 1.0, 4), ('Equalize', 1.0, 10)],
   ]
-  return policy
 
 
 def blend(image1, image2, factor):
@@ -410,8 +402,7 @@ def wrap(image):
   """Returns 'image' with an extra channel set to all 1s."""
   shape = tf.shape(image)
   extended_channel = tf.ones([shape[0], shape[1], 1], image.dtype)
-  extended = tf.concat([image, extended_channel], 2)
-  return extended
+  return tf.concat([image, extended_channel], 2)
 
 
 def unwrap(image, replace):
@@ -473,8 +464,7 @@ NAME_TO_FUNC = {
 def _randomly_negate_tensor(tensor):
   """With 50% prob turn the tensor negative."""
   should_flip = tf.cast(tf.floor(tf.random_uniform([]) + 0.5), tf.bool)
-  final_tensor = tf.cond(should_flip, lambda: tensor, lambda: -tensor)
-  return final_tensor
+  return tf.cond(should_flip, lambda: tensor, lambda: -tensor)
 
 
 def _rotate_level_to_arg(level):
@@ -586,9 +576,7 @@ def _apply_func_with_prob(func, image, args, prob):
   # Apply the function with probability `prob`.
   should_apply_op = tf.cast(
       tf.floor(tf.random_uniform([], dtype=tf.float32) + prob), tf.bool)
-  augmented_image = tf.cond(should_apply_op, lambda: func(image, *args),
-                            lambda: image)
-  return augmented_image
+  return tf.cond(should_apply_op, lambda: func(image, *args), lambda: image)
 
 
 def select_and_apply_random_policy(policies, image):
@@ -672,7 +660,7 @@ def distort_image_with_autoaugment(image, augmentation_name):
   """
   available_policies = {'v0': policy_v0, 'test': policy_vtest}
   if augmentation_name not in available_policies:
-    raise ValueError('Invalid augmentation_name: {}'.format(augmentation_name))
+    raise ValueError(f'Invalid augmentation_name: {augmentation_name}')
 
   policy = available_policies[augmentation_name]()
   # Hparams that will be used for AutoAugment.
@@ -711,7 +699,7 @@ def distort_image_with_randaugment(image, num_layers, magnitude):
                                      maxval=len(available_ops),
                                      dtype=tf.int32)
     random_magnitude = float(magnitude)
-    with tf.name_scope('randaug_layer_{}'.format(layer_num)):
+    with tf.name_scope(f'randaug_layer_{layer_num}'):
       for (i, op_name) in enumerate(available_ops):
         prob = tf.random_uniform([], minval=0.2, maxval=0.8, dtype=tf.float32)
         func, _, args = _parse_policy_info(op_name, prob, random_magnitude,

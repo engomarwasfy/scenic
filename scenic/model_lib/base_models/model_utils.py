@@ -43,9 +43,7 @@ def num_examples(logits: jnp.ndarray,
                  weights: Optional[jnp.ndarray] = None
                  ) -> Union[jnp.ndarray, int]:
   del logits
-  if weights is None:
-    return one_hot_targets.shape[0]
-  return weights.sum()
+  return one_hot_targets.shape[0] if weights is None else weights.sum()
 
 
 def apply_weights(output: jnp.ndarray, weights: jnp.ndarray) -> jnp.ndarray:
@@ -95,8 +93,8 @@ def weighted_correctly_classified(
   """
   if logits.ndim != one_hot_targets.ndim:
     raise ValueError(
-        'Incorrect shapes. Got shape %s logits and %s one_hot_targets' %
-        (str(logits.shape), str(one_hot_targets.shape)))
+        f'Incorrect shapes. Got shape {str(logits.shape)} logits and {str(one_hot_targets.shape)} one_hot_targets'
+    )
   preds = jnp.argmax(logits, axis=-1)
   targets = jnp.argmax(one_hot_targets, axis=-1)
   correct = jnp.equal(preds, targets)
@@ -131,8 +129,8 @@ def weighted_top_one_correctly_classified(
   """
   if logits.ndim != multi_hot_targets.ndim:
     raise ValueError(
-        'Incorrect shapes. Got shape %s logits and %s multi_hot_targets' %
-        (str(logits.shape), str(multi_hot_targets.shape)))
+        f'Incorrect shapes. Got shape {str(logits.shape)} logits and {str(multi_hot_targets.shape)} multi_hot_targets'
+    )
 
   top1_idx = jnp.argmax(logits, axis=-1)
   # Extracts the label at the highest logit index for each input.
@@ -172,11 +170,10 @@ def weighted_topk_correctly_classified(logits: jnp.ndarray,
   """
   if logits.ndim != multi_hot_target.ndim:
     raise ValueError(
-        'Incorrect shapes. Got shape %s logits and %s one_hot_target' %
-        (str(logits.shape), str(multi_hot_target.shape)))
+        f'Incorrect shapes. Got shape {str(logits.shape)} logits and {str(multi_hot_target.shape)} one_hot_target'
+    )
   if k <= 0 or k > logits.shape[-1]:
-    raise ValueError('Incorrect k. k must be in [1,%s]' %
-                     str(logits.shape[-1]))
+    raise ValueError(f'Incorrect k. k must be in [1,{str(logits.shape[-1])}]')
 
   topk_pred = jax.lax.top_k(logits, k)[1]
 
@@ -213,8 +210,8 @@ def weighted_recall(logits: Array, multi_hot_target: Array,
   """
   if logits.ndim != multi_hot_target.ndim:
     raise ValueError(
-        'Incorrect shapes. Got shape %s logits and %s one_hot_target' %
-        (str(logits.shape), str(multi_hot_target.shape)))
+        f'Incorrect shapes. Got shape {str(logits.shape)} logits and {str(multi_hot_target.shape)} one_hot_target'
+    )
 
   num_classes = multi_hot_target.shape[-1]
 
@@ -296,8 +293,8 @@ def weighted_unnormalized_softmax_cross_entropy(
   """
   if logits.ndim != one_hot_targets.ndim:
     raise ValueError(
-        'Incorrect shapes. Got shape %s logits and %s one_hot_targets' %
-        (str(logits.shape), str(one_hot_targets.shape)))
+        f'Incorrect shapes. Got shape {str(logits.shape)} logits and {str(one_hot_targets.shape)} one_hot_targets'
+    )
 
   # Optionally apply label smoothing.
   if label_smoothing is not None:
@@ -350,8 +347,8 @@ def weighted_unnormalized_sigmoid_cross_entropy(
   """
   if logits.ndim != multi_hot_targets.ndim:
     raise ValueError(
-        'Incorrect shapes. Got shape %s logits and %s multi_hot_targets' %
-        (str(logits.shape), str(multi_hot_targets.shape)))
+        f'Incorrect shapes. Got shape {str(logits.shape)} logits and {str(multi_hot_targets.shape)} multi_hot_targets'
+    )
 
   # Optionally apply label smoothing.
   if label_smoothing is not None:
@@ -449,7 +446,7 @@ def l2_regularization(params: PyTree):
 
   """
   weight_penalty_params = jax.tree_leaves(params)
-  return sum([jnp.sum(x**2) for x in weight_penalty_params if x.ndim > 1])
+  return sum(jnp.sum(x**2) for x in weight_penalty_params if x.ndim > 1)
 
 
 def weighted_l1_loss(x: jnp.ndarray,
@@ -560,8 +557,8 @@ def weighted_squared_error(
   """
   if predictions.ndim != targets.ndim:
     raise ValueError(
-        'Incorrect shapes. Got shape %s predictions and %s targets' %
-        (str(predictions.shape), str(targets.shape)))
+        f'Incorrect shapes. Got shape {str(predictions.shape)} predictions and {str(targets.shape)} targets'
+    )
   if axis is None:
     # Sum over all features in each example in the batch:
     axis = tuple(range(1, predictions.ndim))
@@ -637,8 +634,8 @@ def weighted_absolute_error(
   """
   if predictions.ndim != targets.ndim:
     raise ValueError(
-        'Incorrect shapes. Got shape %s predictions and %s targets' %
-        (str(predictions.shape), str(targets.shape)))
+        f'Incorrect shapes. Got shape {str(predictions.shape)} predictions and {str(targets.shape)} targets'
+    )
 
   error = targets - predictions
   loss = jnp.absolute(error)
@@ -669,12 +666,7 @@ def weighted_mean_absolute_error(
   unnormalized_mae = weighted_absolute_error(
       predictions=predictions, targets=targets, weights=weights)
 
-  if weights is not None:
-    # Divide by sum of weights:
-    normalization = weights.sum()
-  else:
-    # Divide by batch size:
-    normalization = unnormalized_mae.shape[0]
+  normalization = unnormalized_mae.shape[0] if weights is None else weights.sum()
   return jnp.sum(unnormalized_mae) / (normalization + 1e-8)
 
 

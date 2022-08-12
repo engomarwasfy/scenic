@@ -193,10 +193,7 @@ def simclr_style_augmentation(frames, height, width, zero_centre):
   reversed_frames = random_time_reverse(solarize_frames)
   reversed_frames = tf.clip_by_value(reversed_frames, 0., 1.)
 
-  if zero_centre:
-    return reversed_frames * 2.0 - 1.0
-  else:
-    return reversed_frames
+  return reversed_frames * 2.0 - 1.0 if zero_centre else reversed_frames
 
 
 def deterministic_crop(images, size, spatial_idx):
@@ -223,15 +220,12 @@ def deterministic_crop(images, size, spatial_idx):
       y_offset = 0
     elif spatial_idx == 2:
       y_offset = height - size
-  else:
-    if spatial_idx == 0:
-      x_offset = 0
-    elif spatial_idx == 2:
-      x_offset = width - size
+  elif spatial_idx == 0:
+    x_offset = 0
+  elif spatial_idx == 2:
+    x_offset = width - size
 
-  cropped = tf.slice(images, [0, y_offset, x_offset, 0], [-1, size, size, -1])
-
-  return cropped
+  return tf.slice(images, [0, y_offset, x_offset, 0], [-1, size, size, -1])
 
 
 def three_spatial_crops(images, crop_size):

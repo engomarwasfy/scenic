@@ -106,7 +106,7 @@ def decode_coco_detection_example(example, input_range=None):
     std_rgb = tf.constant(STDDEV_RGB, shape=[1, 1, 3], dtype=tf.float32)
     image = (image - mean_rgb) / std_rgb
 
-  boxes = decode_boxes(example['objects']['bbox'], tf.shape(image)[0:2])
+  boxes = decode_boxes(example['objects']['bbox'], tf.shape(image)[:2])
 
   target = {
       'area': example['objects']['area'],
@@ -121,7 +121,7 @@ def decode_coco_detection_example(example, input_range=None):
                                  boxes[:, 3] > boxes[:, 1]))[:, 0]
   target_kept = {k: tf.gather(v, keep) for k, v in target.items()}
 
-  target_kept['orig_size'] = tf.cast(tf.shape(image)[0:2], dtype=tf.int32)
+  target_kept['orig_size'] = tf.cast(tf.shape(image)[:2], dtype=tf.int32)
   target_kept['size'] = tf.identity(target_kept['orig_size'])
   target_kept['image/id'] = example['image/id']
 

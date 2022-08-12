@@ -404,7 +404,7 @@ class EncoderBlock(nn.Module):
       x = x + inputs
       y = nn.LayerNorm(dtype=self.dtype)(x)
       y = mlp(y, deterministic=not train)
-      out = x + y
+      return x + y
 
     else:
       x = self_attn(
@@ -419,9 +419,7 @@ class EncoderBlock(nn.Module):
       x = nn.LayerNorm(dtype=self.dtype)(x)
       y = mlp(x, deterministic=not train)
       y = x + y
-      out = nn.LayerNorm(dtype=self.dtype)(y)
-
-    return out
+      return nn.LayerNorm(dtype=self.dtype)(y)
 
 
 class DecoderBlock(nn.Module):
@@ -528,7 +526,7 @@ class DecoderBlock(nn.Module):
       # mlp block
       z = nn.LayerNorm(dtype=self.dtype)(y)
       z = mlp(z, deterministic=not train)
-      out = y + z
+      return y + z
 
     else:
       # self attention block
@@ -556,9 +554,7 @@ class DecoderBlock(nn.Module):
       # mlp block
       z = mlp(y, deterministic=not train)
       z = y + z
-      out = nn.LayerNorm(dtype=self.dtype)(z)
-
-    return out
+      return nn.LayerNorm(dtype=self.dtype)(z)
 
 
 class Encoder(nn.Module):
@@ -778,7 +774,7 @@ class DETRTransformer(nn.Module):
             train=train)
 
     query_dim = self.query_emb_size or inputs.shape[-1]
-    obj_query_shape = tuple([inputs.shape[0], self.num_queries, query_dim])
+    obj_query_shape = inputs.shape[0], self.num_queries, query_dim
     # Note that we always learn query_pos_embed, so we simply use constant
     # zero vectors for obj_queries and later when applying attention, we have:
     # query = query_pos_embed + obj_queries
@@ -841,8 +837,7 @@ class BBoxCoordPredictor(nn.Module):
         bias_init=uniform_initializer(
             -bias_range, bias_range, dtype=self.dtype))(
                 x)
-    output = nn.sigmoid(x)
-    return output
+    return nn.sigmoid(x)
 
 
 class ObjectClassPredictor(nn.Module):

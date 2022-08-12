@@ -176,8 +176,7 @@ class Encoder(nn.Module):
           name=f'encoderblock_{lyr}',
           dtype=dtype)(
               x, deterministic=not train)
-    encoded = nn.LayerNorm(name='encoder_norm')(x)
-    return encoded
+    return nn.LayerNorm(name='encoder_norm')(x)
 
 
 class ViT(nn.Module):
@@ -460,13 +459,11 @@ def _merge_params(params, restored_params, model_cfg, restored_model_cfg):
               restored_posemb_grid = scipy.ndimage.zoom(
                   restored_posemb_grid, zoom, order=1)
             # Attach the CLS token again.
-            restored_posemb_grid = restored_posemb_grid.reshape(
-                1, gs * gs, -1)
+            restored_posemb_grid = restored_posemb_grid.reshape(1, gs**2, -1)
             restored_posemb = jnp.array(
                 np.concatenate([cls_tok, restored_posemb_grid], axis=1))
 
           params[m_key][tm_key]['pos_embedding'] = restored_posemb
-        # Other parameters of the Transformer encoder if they are in the target.
         elif tm_key in params[m_key]:
           params[m_key][tm_key] = tm_params
         else:

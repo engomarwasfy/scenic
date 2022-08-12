@@ -220,10 +220,7 @@ class Affine(nn.Module):
   def __call__(self, x: jnp.ndarray) -> jnp.ndarray:
     n = x.shape[-1]
     scale = self.param('scale', self.scale_init, (n,))
-    if self.use_bias:
-      bias = self.param('bias', self.bias_init, (n,))
-    else:
-      bias = 0.0
+    bias = self.param('bias', self.bias_init, (n,)) if self.use_bias else 0.0
     return scale * x + bias
 
 

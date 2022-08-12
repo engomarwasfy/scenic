@@ -126,8 +126,7 @@ class Stem(nn.Module):
       raise ValueError('Input_mask should be of shape `[bs, l]` but it is '
                        f'{input_mask.shape}.')
 
-    embedding_width = (
-        self.embedding_width if self.embedding_width else self.hidden_size)
+    embedding_width = self.embedding_width or self.hidden_size
 
     word_embedding_layer = nn.Embed(
         num_embeddings=self.vocab_size,

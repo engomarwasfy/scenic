@@ -14,6 +14,7 @@
 
 """Tests for models.py."""
 
+
 from absl.testing import absltest
 from absl.testing import parameterized
 from jax.flatten_util import ravel_pytree
@@ -27,14 +28,12 @@ INPUT_SHAPE = (10, 32, 32, 3)
 
 
 # Automatically test all defined classification models.
-CLASSIFICATION_KEYS = [
-    ('test_{}'.format(m), m) for m in models.CLASSIFICATION_MODELS.keys()
-]
+CLASSIFICATION_KEYS = [(f'test_{m}', m)
+                       for m in models.CLASSIFICATION_MODELS.keys()]
 
 # Automatically test all defined segmentation models.
-SEGMENTATION_KEYS = [
-    ('test_{}'.format(m), m) for m in models.SEGMENTATION_MODELS.keys()
-]
+SEGMENTATION_KEYS = [(f'test_{m}', m)
+                     for m in models.SEGMENTATION_MODELS.keys()]
 
 
 class ModelsTest(parameterized.TestCase):

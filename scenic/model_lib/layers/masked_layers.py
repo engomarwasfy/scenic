@@ -32,7 +32,7 @@ import numpy as np
 
 
 def _absolute_dims(rank: int, dims: Iterable[int]):
-  return tuple([rank + dim if dim < 0 else dim for dim in dims])
+  return tuple(rank + dim if dim < 0 else dim for dim in dims)
 
 
 def avg_pool(
@@ -355,13 +355,15 @@ class GroupNorm(nn.Module):
     channels = x.shape[-1]
     if self.group_size is not None:
       if channels % self.group_size != 0:
-        raise ValueError('Number of channels ({}) is not multiple of the '
-                         'group size ({}).'.format(channels, self.group_size))
+        raise ValueError(
+            f'Number of channels ({channels}) is not multiple of the group size ({self.group_size}).'
+        )
       num_groups = channels // self.group_size
 
     if num_groups <= 0 or channels % num_groups != 0:
-      raise ValueError('Number of groups ({}) does not divide the number'
-                       ' of channels ({}).'.format(num_groups, channels))
+      raise ValueError(
+          f'Number of groups ({num_groups}) does not divide the number of channels ({channels}).'
+      )
 
     input_shape = x.shape
     group_shape = x.shape[:-1] + (num_groups, x.shape[-1] // num_groups)
@@ -385,7 +387,7 @@ class GroupNorm(nn.Module):
     x = (x - mean) * lax.rsqrt(var + self.epsilon)
     x = x.reshape(input_shape)
 
-    feature_shape = tuple([1 for d in input_shape[:-1]] + [input_shape[-1]])
+    feature_shape = tuple([1 for _ in input_shape[:-1]] + [input_shape[-1]])
     if self.use_scale:
       x *= self.param('scale', self.scale_init, feature_shape)
     if self.use_bias:

@@ -19,9 +19,7 @@ LossFn = Callable[[Dict[str, jnp.ndarray], Batch, Optional[jnp.ndarray]], float]
 def num_examples(
     logits: jnp.ndarray,
     weights: Optional[jnp.ndarray] = None) -> Union[jnp.ndarray, int]:
-  if weights is None:
-    return logits.shape[0]
-  return weights.sum()
+  return logits.shape[0] if weights is None else weights.sum()
 
 
 def sparse_weighted_unnormalized_softmax_cross_entropy(
@@ -148,22 +146,20 @@ def bert_metrics_function(outputs: Dict[str, jnp.ndarray],
       mlm_logits, batch['masked_lm_ids'], batch['masked_lm_weights'],
       batch_weights)
 
-  # This psum is required to correctly evaluate with multihost. Only host 0
-  # will report the metrics, so we must aggregate across all hosts. The psum
-  # will map an array of shape [n_global_devices, batch_size] -> [batch_size]
-  # by summing across the devices dimension. The outer sum then sums across the
-  # batch dim. The result is then we have summed across all samples in the
-  # sharded batch.
-  evaluated_metrics = {}
   normalizer = num_examples(mlm_logits, batch_weights)
-  for name, value in zip(
-      ['nsp_loss', 'nsp_accuracy', 'mlm_loss', 'mlm_accuracy', 'loss'], [
-          per_ex_nsp_loss, per_ex_nsp_accuracy, per_ex_mlm_loss,
-          per_ex_mlm_accuracy, per_ex_nsp_loss + per_ex_mlm_loss
-      ]):
-    evaluated_metrics[name] = model_utils.psum_metric_normalizer(
-        (value, normalizer))
-  return evaluated_metrics
+  return {
+      name: model_utils.psum_metric_normalizer((value, normalizer))
+      for name, value in zip(
+          ['nsp_loss', 'nsp_accuracy', 'mlm_loss', 'mlm_accuracy', 'loss'],
+          [
+              per_ex_nsp_loss,
+              per_ex_nsp_accuracy,
+              per_ex_mlm_loss,
+              per_ex_mlm_accuracy,
+              per_ex_nsp_loss + per_ex_mlm_loss,
+          ],
+      )
+  }
 
 
 def compute_bert_loss(mlm_logits: jnp.ndarray, nsp_logits: jnp.ndarray,
