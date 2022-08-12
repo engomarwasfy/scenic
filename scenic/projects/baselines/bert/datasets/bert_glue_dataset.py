@@ -157,8 +157,9 @@ def get_dataset(*,
   del shuffle_seed
   assert dataset_configs is not None
   if dataset_configs.task not in _SUPPORTED_TASK_NAMES:
-    raise ValueError('dataset_configs.task_name must be one of [{}].'.format(
-        ', '.join(_SUPPORTED_TASK_NAMES)))
+    raise ValueError(
+        f"dataset_configs.task_name must be one of [{', '.join(_SUPPORTED_TASK_NAMES)}]."
+    )
   with tf.io.gfile.GFile(dataset_configs.input_meta_data_path, 'rb') as reader:
     input_meta_data = json.loads(reader.read().decode('utf-8'))
   label_type = _LABEL_TYPES_MAP[input_meta_data.get('label_type', 'int')]

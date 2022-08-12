@@ -202,11 +202,9 @@ class EncoderDecoderModel(base_model.BaseModel):
         weights,
         label_smoothing=self.config.get('label_smoothing'))
     if self.config.get('l2_decay_factor') is None:
-      total_loss = sof_ce_loss
-    else:
-      l2_loss = model_utils.l2_regularization(model_params)
-      total_loss = sof_ce_loss + 0.5 * self.config.l2_decay_factor * l2_loss
-    return total_loss
+      return sof_ce_loss
+    l2_loss = model_utils.l2_regularization(model_params)
+    return sof_ce_loss + 0.5 * self.config.l2_decay_factor * l2_loss
 
   def build_flax_model(self):
     raise NotImplementedError('Subclasses must implement build_flax_model().')

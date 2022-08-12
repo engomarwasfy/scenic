@@ -36,10 +36,14 @@ def preprocess_example(example, dtype=tf.float32):
   Returns:
     An example dict as required by the model.
   """
-  example_out = {}
-  # For simplicity, just resize all images to the same shape:
-  example_out['inputs'] = tf.image.resize(
-      dataset_utils.normalize(example['image'], dtype), IMAGE_SIZE, 'bilinear')
+  example_out = {
+      'inputs':
+      tf.image.resize(
+          dataset_utils.normalize(example['image'], dtype),
+          IMAGE_SIZE,
+          'bilinear',
+      )
+  }
   example_out['inputs'] = tf.cast(example_out['inputs'], dtype)
 
   example_out['label'] = tf.image.resize(

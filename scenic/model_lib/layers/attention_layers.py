@@ -505,11 +505,7 @@ class Add1DPositionEmbedding(nn.Module):
                               ' but it is: %d' % inputs.ndim)
     length = inputs.shape[1]
     max_len = self.max_len or length
-    embedding_length = max_len
-
-    if self.rescale_from:  # Shape: `[len, c]`.
-      embedding_length = self.rescale_from[0]
-
+    embedding_length = self.rescale_from[0] if self.rescale_from else max_len
     pos_emb_shape = (1, embedding_length, inputs.shape[-1])
     if self.posemb_init is None:
       # Use a fixed (non-learned) sinusoidal position embedding.

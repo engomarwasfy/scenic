@@ -271,7 +271,7 @@ def get_label_map(tfds_name: str) -> Dict[int, str]:
     return {0: 'padding', **REF_COCO}
   elif tfds_name == 'lvis':
     return get_lvis_label_map()
-  elif tfds_name in ['objects365', 'scenic:objects365']:
+  elif tfds_name in {'objects365', 'scenic:objects365'}:
     return get_objects365_label_map()
   elif tfds_name.startswith('open_images'):
     return get_openimages_label_map(tfds_name)

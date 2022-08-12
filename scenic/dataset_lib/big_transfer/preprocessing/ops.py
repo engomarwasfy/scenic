@@ -425,7 +425,7 @@ def get_random_rotation(min_angle=0, max_angle=360):
   def _random_rotation(image):
     """Rotation function."""
     num_dims = len(image.shape)
-    if num_dims in [3, 4]:
+    if num_dims in {3, 4}:
       batch_size = tf.shape(image)[0] if num_dims == 4 else 1
     else:
       raise ValueError("Tensor \"image\" should have 3 or 4 dimensions.")

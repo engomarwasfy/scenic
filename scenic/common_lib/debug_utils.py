@@ -223,9 +223,8 @@ class ConfigDictWithAccessRecord(ml_collections.ConfigDict):
       path = f'{prefix}.{key}'
       if isinstance(value, type(self)):
         not_accessed |= value.get_not_accessed(prefix=path)
-      else:
-        if key not in self._access_record and key != '_access_record':
-          not_accessed.add(path)
+      elif key not in self._access_record and key != '_access_record':
+        not_accessed.add(path)
     return not_accessed
 
 

@@ -144,10 +144,9 @@ def preprocess_example(example, train, dtype=tf.float32, resize=None):
   mask = example['segmentation_label']
 
   # Resize test images (train images are cropped/resized during augmentation):
-  if not train:
-    if resize is not None:
-      image = tf.image.resize(image, resize, 'bilinear')
-      mask = tf.image.resize(mask, resize, 'nearest')
+  if not train and resize is not None:
+    image = tf.image.resize(image, resize, 'bilinear')
+    mask = tf.image.resize(mask, resize, 'nearest')
 
   image = tf.cast(image, dtype)
   mask = tf.cast(mask, dtype)

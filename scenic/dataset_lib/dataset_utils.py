@@ -477,8 +477,7 @@ def get_num_examples(dataset, split, data_dir=None):
   # Download dataset:
   builder.download_and_prepare()
   num_examples = builder.info.splits[split].num_examples
-  remainder = num_examples % jax.process_count()
-  if remainder:
+  if remainder := num_examples % jax.process_count():
     warning = (f'Dropping {remainder} examples for the '
                f'{builder.info.name} dataset, {split} split. '
                f'The reason is that all hosts should have the same number '

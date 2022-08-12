@@ -470,10 +470,8 @@ def hungarian_cover_matcher(weights: jnp.ndarray,
   workers_ind = workers_ind[:, :n - pad_n]
   jobs_ind = jobs_ind[:, :n - pad_n]
 
-  if not should_transpose:
-    ind = jnp.stack([workers_ind, jobs_ind], axis=1)
-  else:
-    ind = jnp.stack([jobs_ind, workers_ind], axis=1)
+  ind = (jnp.stack([jobs_ind, workers_ind], axis=1)
+         if should_transpose else jnp.stack([workers_ind, jobs_ind], axis=1))
   return ind
 
 

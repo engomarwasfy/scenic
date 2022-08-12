@@ -131,20 +131,18 @@ class ResNet(nn.Module):
         x = residual_block(filters=filters, strides=strides)(x, train)
       representations[f'stage_{i + 1}'] = x
 
-    # Head.
-    if self.num_outputs:
-      x = jnp.mean(x, axis=(1, 2))
-      x = nn_layers.IdentityLayer(name='pre_logits')(x)
-      x = nn.Dense(
-          self.num_outputs,
-          kernel_init=self.kernel_init,
-          bias_init=self.bias_init,
-          dtype=self.dtype,
-          name='output_projection')(
-              x)
-      return x
-    else:
+    if not self.num_outputs:
       return representations
+    x = jnp.mean(x, axis=(1, 2))
+    x = nn_layers.IdentityLayer(name='pre_logits')(x)
+    x = nn.Dense(
+        self.num_outputs,
+        kernel_init=self.kernel_init,
+        bias_init=self.bias_init,
+        dtype=self.dtype,
+        name='output_projection')(
+            x)
+    return x
 
 
 # A dictionary mapping the number of layers in a resnet to the number of

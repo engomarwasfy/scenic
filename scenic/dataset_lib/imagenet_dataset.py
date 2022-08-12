@@ -168,15 +168,14 @@ def preprocess_for_train(image_bytes,
   Returns:
     A preprocessed image `Tensor`.
   """
-  if data_augmentations is not None:
-    if 'default' in data_augmentations:
-      image = _decode_and_random_crop(image_bytes, image_size)
-      image = tf.reshape(image, [image_size, image_size, 3])
-      image = tf.image.random_flip_left_right(image)
-  else:
+  if data_augmentations is None:
     image = _decode_and_center_crop(image_bytes, image_size)
     image = tf.reshape(image, [image_size, image_size, 3])
 
+  elif 'default' in data_augmentations:
+    image = _decode_and_random_crop(image_bytes, image_size)
+    image = tf.reshape(image, [image_size, image_size, 3])
+    image = tf.image.random_flip_left_right(image)
   if dtype not in [tf.int32, tf.int64, tf.uint32, tf.uint64]:
     image = normalize_image(image)
     image = tf.image.convert_image_dtype(image, dtype=dtype)

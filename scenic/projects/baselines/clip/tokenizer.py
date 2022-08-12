@@ -52,7 +52,9 @@ def build_tokenizer(
     logging.info('Downloaded vocabulary from %s to %s', bpe_url, download_dir)
 
   tokenizer = SimpleTokenizer(bpe_path)
-  tokenizer_fn = functools.partial(_tokenize, tokenizer=tokenizer,
-                                   context_length=MAX_TEXT_LENGTH,
-                                   truncate=truncate)
-  return tokenizer_fn
+  return functools.partial(
+      _tokenize,
+      tokenizer=tokenizer,
+      context_length=MAX_TEXT_LENGTH,
+      truncate=truncate,
+  )

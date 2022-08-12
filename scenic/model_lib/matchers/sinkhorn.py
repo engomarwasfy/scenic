@@ -67,9 +67,7 @@ def sample_permutation(key, coupling):
   row_ind = jnp.argsort(w, axis=-1)
   col_ind = jnp.tile(jnp.arange(0, dim)[None, :], [bs, 1])
 
-  # Compute permutation matrix from row and column indices.
-  perm = idx2permutation(row_ind, col_ind)
-  return perm
+  return idx2permutation(row_ind, col_ind)
 
 
 def sample_best_permutation(key, coupling, cost, num_trials=10):
@@ -96,8 +94,7 @@ def sample_best_permutation(key, coupling, cost, num_trials=10):
   # Pick the permutation with minimal ot cost
   ot = jnp.einsum('nbij,bij->nb', perms, cost)
   min_idx = jnp.argmin(ot, axis=0)
-  out_perm = jax.vmap(jnp.take, (1, 0, None))(perms, min_idx, 0)
-  return out_perm
+  return jax.vmap(jnp.take, (1, 0, None))(perms, min_idx, 0)
 
 
 def sinkhorn_matcher(cost: jnp.ndarray,

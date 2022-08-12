@@ -205,8 +205,8 @@ def compute_relative_positions(query_spatial_shape,
 
   num_dims = len(spatial_axis)
   # Keep only dimensions we are iterested in.
-  query_spatial_shape = tuple([query_spatial_shape[a] for a in spatial_axis])
-  key_spatial_shape = tuple([key_spatial_shape[a] for a in spatial_axis])
+  query_spatial_shape = tuple(query_spatial_shape[a] for a in spatial_axis)
+  key_spatial_shape = tuple(key_spatial_shape[a] for a in spatial_axis)
 
   total_queries = np.prod(query_spatial_shape)
 
@@ -355,7 +355,7 @@ def pooling(inputs,
     x = space_to_depth(inputs, window_shape, strides=strides, padding=padding)
 
   else:
-    raise ValueError('Pooling type {} is not defined.'.format(pooling_type))
+    raise ValueError(f'Pooling type {pooling_type} is not defined.')
   return x
 
 
@@ -452,8 +452,7 @@ def upscale2x_nearest_neighbor(inputs):
   output_nchw_shape = (-1, input_channels, height_scale * input_h,
                        width_scale * input_w)
   output_nchw = jnp.reshape(flat_output, output_nchw_shape)
-  resized_x = jnp.transpose(output_nchw, (0, 2, 3, 1))  # Output: nhwc.
-  return resized_x
+  return jnp.transpose(output_nchw, (0, 2, 3, 1))
 
 
 def central_crop(inputs, target_shape):

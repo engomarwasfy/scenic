@@ -71,19 +71,16 @@ def multilabel_classification_metrics_function(
     multihot_target = common_utils.onehot(batch['label'], logits.shape[-1])
   weights = batch.get('batch_mask')  # batch_mask might not be defined
 
-  # This psum is required to correctly evaluate with multihost. Only host 0
-  # will report the metrics, so we must aggregate across all hosts. The psum
-  # will map an array of shape [n_global_devices, batch_size] -> [batch_size]
-  # by summing across the devices dimension. The outer sum then sums across the
-  # batch dim. The result is then we have summed across all samples in the
-  # sharded batch.
-  evaluated_metrics = {}
-  for key, val in metrics.items():
-    evaluated_metrics[key] = model_utils.psum_metric_normalizer(
-        (val[0](logits, multihot_target, weights), val[1](
-            logits, multihot_target, weights)),
-        axis_name=axis_name)
-  return evaluated_metrics
+  return {
+      key: model_utils.psum_metric_normalizer(
+          (
+              val[0](logits, multihot_target, weights),
+              val[1](logits, multihot_target, weights),
+          ),
+          axis_name=axis_name,
+      )
+      for key, val in metrics.items()
+  }
 
 
 class MultiLabelClassificationModel(base_model.BaseModel):
@@ -169,11 +166,9 @@ class MultiLabelClassificationModel(base_model.BaseModel):
         weights,
         label_smoothing=self.config.get('label_smoothing'))
     if self.config.get('l2_decay_factor') is None:
-      total_loss = sig_ce_loss
-    else:
-      l2_loss = model_utils.l2_regularization(model_params)
-      total_loss = sig_ce_loss + 0.5 * self.config.l2_decay_factor * l2_loss
-    return total_loss
+      return sig_ce_loss
+    l2_loss = model_utils.l2_regularization(model_params)
+    return sig_ce_loss + 0.5 * self.config.l2_decay_factor * l2_loss
 
   def build_flax_model(self):
     raise NotImplementedError('Subclasses must implement build_flax_model().')

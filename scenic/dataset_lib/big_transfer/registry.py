@@ -39,13 +39,15 @@ def partialclass(cls, *base_args, **base_kwargs):
   Author: Joan Puigcerver (jpuigcerver@)
   """
 
+
+
   class _NewClass(cls):
 
     def __init__(self, *args, **kwargs):
       bound_args = base_args + args
-      bound_kwargs = base_kwargs.copy()
-      bound_kwargs.update(kwargs)
+      bound_kwargs = base_kwargs | kwargs
       super(_NewClass, self).__init__(*bound_args, **bound_kwargs)
+
 
   return _NewClass
 
@@ -127,7 +129,7 @@ def parse_name(string_to_parse):
 
   def _get_func_name(expr):
     if isinstance(expr, ast.Attribute):
-      return _get_func_name(expr.value) + "." + expr.attr
+      return f"{_get_func_name(expr.value)}.{expr.attr}"
     elif isinstance(expr, ast.Name):
       return expr.id
     else:
@@ -136,7 +138,7 @@ def parse_name(string_to_parse):
           "was {!r}".format(type(expr), string_to_parse))
 
   def _get_func_args_and_kwargs(call):
-    args = tuple([ast.literal_eval(arg) for arg in call.args])
+    args = tuple(ast.literal_eval(arg) for arg in call.args)
     kwargs = {
         kwarg.arg: ast.literal_eval(kwarg.value) for kwarg in call.keywords
     }
@@ -165,7 +167,7 @@ class Registry(object):
     """Creates a function that registers its input."""
 
     if item_type not in ["object", "function", "factory", "class"]:
-      raise ValueError("Unknown item type: %s" % item_type)
+      raise ValueError(f"Unknown item type: {item_type}")
 
     def _register(item):
       if name in Registry.global_registry() and not replace:

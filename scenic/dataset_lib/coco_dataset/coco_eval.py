@@ -87,8 +87,7 @@ class UniversalCOCO(COCO):
     if self.annotation_file is not None:
       dataset = _load_json(self.annotation_file)
       assert isinstance(
-          dataset, dict), 'annotation file format {} not supported'.format(
-              type(dataset))
+          dataset, dict), f'annotation file format {type(dataset)} not supported'
 
       if 'segments_info' in dataset['annotations'][0]:
         # Dataset is in panoptic format. Translate to standard format:
@@ -135,15 +134,14 @@ def _panoptic_to_standard_annotations(annotations):
 
   object_annotations = []
   for image_annotation in annotations:
-    for object_annotation in image_annotation['segments_info']:
-      object_annotations.append({
-          'image_id': image_annotation['image_id'],
-          'id': object_annotation['id'],
-          'category_id': object_annotation['category_id'],
-          'iscrowd': object_annotation['iscrowd'],
-          'bbox': object_annotation['bbox'],
-          'area': object_annotation['area'],
-      })
+    object_annotations.extend({
+        'image_id': image_annotation['image_id'],
+        'id': object_annotation['id'],
+        'category_id': object_annotation['category_id'],
+        'iscrowd': object_annotation['iscrowd'],
+        'bbox': object_annotation['bbox'],
+        'area': object_annotation['area'],
+    } for object_annotation in image_annotation['segments_info'])
   return object_annotations
 
 

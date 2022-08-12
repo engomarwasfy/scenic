@@ -186,7 +186,7 @@ def init_bert_from_train_state(
   restored_params = flax.core.unfreeze(restored_train_state.optimizer.target)
   params_dict = _get_param_dict(params)
   # Fix some names:
-  restored_params_dict = dict()
+  restored_params_dict = {}
   for key, value in flax.traverse_util.flatten_dict(restored_params).items():
     name = '/'.join([str(k) for k in key])
     if config.init_from.restore_next_sentence_prediction_head_params:

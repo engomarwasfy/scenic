@@ -58,13 +58,16 @@ def regression_metrics_function(
   """
   targets = batch['targets']
   weights = batch.get('batch_mask')
-  evaluated_metrics = {}
-  for key, val in metrics.items():
-    evaluated_metrics[key] = model_utils.psum_metric_normalizer(
-        (val[0](targets, predictions, weights), val[1](targets, predictions,
-                                                       weights)),
-        axis_name=axis_name)
-  return evaluated_metrics
+  return {
+      key: model_utils.psum_metric_normalizer(
+          (
+              val[0](targets, predictions, weights),
+              val[1](targets, predictions, weights),
+          ),
+          axis_name=axis_name,
+      )
+      for key, val in metrics.items()
+  }
 
 
 class RegressionModel(base_model.BaseModel):
